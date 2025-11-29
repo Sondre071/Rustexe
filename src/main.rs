@@ -1,23 +1,37 @@
-use clap::Parser;
 use anyhow::{Context, Result};
+use clap::Parser;
+use std::fs;
+use std::path::PathBuf;
 
-// Search for a pattern in a file and displa ythe lines that contain it
 #[derive(Parser)]
 struct Cli {
     pattern: String,
-    path: std::path::PathBuf,
+    path: PathBuf,
 }
 
 fn main() -> Result<()> {
     let args = Cli::parse();
-    let content = std::fs::read_to_string(&args.path)
-        .with_context(|| format!("could not read file `{}`", args.path.display()))?;
 
-    for line in content.lines() {
-        if line.contains(&args.pattern) {
-            println!("{}", line)
-        }
-    }
+    let content = fs::read_to_string(&args.path)
+        .with_context(|| format!("Could not read file `{}`", args.path.display()))?;
+
+    let matches = find_and_print_matches(&content, &args.pattern);
+
+    println!("Found {} matches.", matches);
 
     Ok(())
+}
+
+fn find_and_print_matches(content: &str, pattern: &str) -> usize {
+    content
+        .lines()
+        .filter(|line| line.contains(pattern))
+        .inspect(|line| println!("{}", line))
+        .count()
+}
+
+#[test]
+fn test_find_matches() {
+    let matches = find_and_print_matches("ajdfau\njajauau8ru\ngt585t\nauau9ufjia\njighau58hu", "au");
+    assert_eq!(matches, 4);
 }
