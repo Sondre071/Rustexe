@@ -4,14 +4,7 @@ use windows_sys::Win32::Foundation::HANDLE;
 
 #[derive(Debug)]
 pub struct KeyEvent {
-    pub vk: u16,
     pub ch: Option<char>,
-}
-
-impl KeyEvent {
-    pub fn is_char(&self, c: char) -> bool {
-        self.ch == Some(c)
-    }
 }
 
 pub unsafe fn read_key_unsafe(stdin: HANDLE) -> Option<KeyEvent> {
@@ -30,14 +23,13 @@ pub unsafe fn read_key_unsafe(stdin: HANDLE) -> Option<KeyEvent> {
             let ev = unsafe { rec.Event.KeyEvent };
 
             if ev.bKeyDown != 0 {
-                let vk = ev.wVirtualKeyCode;
                 let u = unsafe { ev.uChar.UnicodeChar };
                 let ch = if u == 0 {
                     None
                 } else {
                     char::from_u32(u as u32)
                 };
-                return Some(KeyEvent { vk, ch });
+                return Some(KeyEvent { ch });
             }
         }
     }
