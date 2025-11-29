@@ -1,8 +1,9 @@
+use std::process;
 use windows_sys::Win32::System::Console::{GetStdHandle, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE};
 
 use crate::{init, input};
 
-pub fn run(options: &[&str]) {
+pub fn run(header: &Option<String>, subheaders: &Option<Vec<String>>, options: &Vec<String>) {
     let stdin = unsafe { GetStdHandle(STD_INPUT_HANDLE) };
     let stdout = unsafe { GetStdHandle(STD_OUTPUT_HANDLE) };
 
@@ -12,6 +13,16 @@ pub fn run(options: &[&str]) {
     let l = options.len();
     let mut current_index = 0;
 
+    if let Some(header) = header {
+        println!("\x1b[0;93m========== {} ==========\x1b[0m", header);
+    }
+
+    if let Some(subheaders) = subheaders {
+        subheaders
+            .iter()
+            .for_each(|subheader| println!("\x1b[0;93m{}\x1b[0m", subheader));
+    }
+
     render_menu(options, current_index, width);
 
     loop {
@@ -19,6 +30,9 @@ pub fn run(options: &[&str]) {
 
         if let Some(ch) = key.ch {
             match ch {
+                'h' => {
+                    process::exit(current_index as i32);
+                }
                 'j' => {
                     if current_index != l - 1 {
                         current_index += 1
@@ -29,21 +43,19 @@ pub fn run(options: &[&str]) {
                         current_index -= 1
                     }
                 }
-                'q' => {
-                    println!("\x1b[0J");
+                'q' | 'l' => {
                     break;
                 }
                 _ => continue,
             }
         }
-
         println!("\x1b[{}A", l + 1);
 
         render_menu(options, current_index, width);
     }
 }
 
-fn render_menu(options: &[&str], current: usize, width: usize) {
+fn render_menu(options: &Vec<String>, current: usize, width: usize) {
     let content_width = width.saturating_sub(3);
 
     for i in 0..options.len() {
